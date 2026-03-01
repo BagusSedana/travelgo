@@ -398,13 +398,17 @@ function DestinationsTab() {
         </p>
       </div>
 
-      <div className="bg-white/[0.03] border border-white/5 rounded-2xl overflow-x-auto">
-        <div className="min-w-[700px]">
-          <div className="grid grid-cols-12 gap-4 px-5 py-3 border-b border-white/5">
+      <div className="bg-white/[0.03] border border-white/5 rounded-2xl overflow-hidden">
+        <div>
+          <div className="grid grid-cols-12 gap-2 sm:gap-4 px-4 sm:px-5 py-3 border-b border-white/5">
             {["Destinasi", "Tag", "Durasi", "Harga", "Aksi"].map((h, i) => (
               <div
                 key={h || i}
-                className={`${i === 0 ? "col-span-3" : i === 4 ? "col-span-3 text-right" : "col-span-2"} text-white/20 px-2`}
+                className={`${i === 0 ? "col-span-5 sm:col-span-3" :
+                    i === 4 ? "col-span-4 sm:col-span-3 text-right" :
+                      i === 3 ? "col-span-3 sm:col-span-2" :
+                        "hidden sm:block sm:col-span-2"
+                  } text-white/20 px-1 sm:px-2`}
                 style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}
               >
                 {h}
@@ -414,32 +418,33 @@ function DestinationsTab() {
 
           <div className="divide-y divide-white/5">
             {destinations.map((d) => (
-              <div key={d.id} className="grid grid-cols-12 gap-4 items-center px-5 py-4 hover:bg-white/[0.02] transition-colors">
-                <div className="col-span-3 flex items-center gap-3">
+              <div key={d.id} className="grid grid-cols-12 gap-2 sm:gap-4 items-center px-4 sm:px-5 py-4 hover:bg-white/[0.02] transition-colors">
+                <div className="col-span-5 sm:col-span-3 flex items-center gap-2 sm:gap-3">
                   <div
-                    className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-cover bg-center"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden flex-shrink-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${d.image})` }}
                   />
-                  <span className="text-white" style={{ fontSize: "13px", fontWeight: 400 }}>
+                  <span className="text-white truncate" style={{ fontSize: "13px", fontWeight: 400 }}>
                     {d.name}
                   </span>
                 </div>
-                <div className="col-span-2 px-2">
+                <div className="hidden sm:block sm:col-span-2 px-2">
                   <span className="text-white/30" style={{ fontSize: "12px", fontWeight: 300 }}>{d.tag}</span>
                 </div>
-                <div className="col-span-2 px-2">
+                <div className="hidden sm:block sm:col-span-2 px-2">
                   <span className="text-white/30" style={{ fontSize: "12px", fontWeight: 300 }}>{d.duration.id}</span>
                 </div>
-                <div className="col-span-2 px-2">
-                  <span className="text-white/90" style={{ fontSize: "13px", fontWeight: 400 }}>{d.price}</span>
+                <div className="col-span-3 sm:col-span-2 px-1 sm:px-2">
+                  <span className="text-white/90" style={{ fontSize: "12px", fontWeight: 400 }}>{d.price}</span>
                 </div>
-                <div className="col-span-3 flex justify-end">
+                <div className="col-span-4 sm:col-span-3 flex justify-end">
                   <button
                     onClick={() => setEditData(d)}
-                    className="px-4 py-2 rounded-xl bg-white/5 text-white/60 hover:text-white hover:bg-white/15 transition-colors border-none cursor-pointer"
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-white/5 text-white/60 hover:text-white hover:bg-white/15 transition-colors border-none cursor-pointer"
                     style={{ fontSize: "11px", fontWeight: 500 }}
                   >
-                    Edit Lengkap
+                    <span className="sm:hidden">Edit</span>
+                    <span className="hidden sm:inline">Edit Lengkap</span>
                   </button>
                 </div>
               </div>
