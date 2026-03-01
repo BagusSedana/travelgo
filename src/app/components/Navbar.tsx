@@ -29,9 +29,8 @@ export function Navbar() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 0.5 }}
-        className={`fixed top-0 inset-x-0 z-50 transition-all duration-700 ${
-          scrolled ? "bg-white/90 backdrop-blur-2xl" : "bg-transparent"
-        }`}
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-700 ${scrolled ? "bg-white/90 backdrop-blur-2xl" : "bg-transparent"
+          }`}
       >
         <div className="max-w-[1400px] mx-auto px-8 md:px-12 h-20 flex items-center justify-between">
           <button
@@ -45,7 +44,7 @@ export function Navbar() {
               color: scrolled ? "#0a0a0a" : "#fff",
             }}
           >
-            TravelGo
+            TravelJimb
           </button>
 
           {/* Desktop */}

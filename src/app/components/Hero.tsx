@@ -98,8 +98,8 @@ export function Hero() {
             onClick={() => {
               const isId = lang === "id";
               const msg = isId
-                ? "Halo TravelGo!\nSaya tertarik untuk memesan driver di Bali. Boleh minta info lebih lanjut?"
-                : "Hello TravelGo!\nI'm interested in booking a driver in Bali. Could you send me more info?\n\n──────────────────\nTerjemahan untuk driver:\n\nTamu ini tertarik memesan driver di Bali. Mohon ditindaklanjuti.";
+                ? "Halo TravelJimb!\nSaya tertarik untuk memesan driver di Bali. Boleh minta info lebih lanjut?"
+                : "Hello TravelJimb!\nI'm interested in booking a driver in Bali. Could you send me more info?\n\n──────────────────\nTerjemahan untuk driver:\n\nTamu ini tertarik memesan driver di Bali. Mohon ditindaklanjuti.";
               addBooking({ destination: "General Inquiry", tag: "Hero CTA", price: "-", source: "hero" });
               window.open(buildWaUrl(msg), "_blank");
             }}

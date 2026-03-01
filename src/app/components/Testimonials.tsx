@@ -18,8 +18,8 @@ const reviews = [
   },
   {
     text: {
-      id: "Sudah 3 kali pakai TravelGo dan makin bagus setiap kunjungan. Tepat waktu, mobil bersih, harga fair. Drivernya sudah seperti keluarga — sesantai itu pelayanannya.",
-      en: "Third time using TravelGo and it gets better every visit. Punctual, clean car, fair prices. The driver feels like family — that's how personal the service is.",
+      id: "Sudah 3 kali pakai TravelJimb dan makin bagus setiap kunjungan. Tepat waktu, mobil bersih, harga fair. Drivernya sudah seperti keluarga — sesantai itu pelayanannya.",
+      en: "Third time using TravelJimb and it gets better every visit. Punctual, clean car, fair prices. The driver feels like family — that's how personal the service is.",
     },
     name: "Budi Hartono",
     from: "Surabaya, Indonesia",

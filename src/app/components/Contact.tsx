@@ -13,7 +13,7 @@ export function Contact() {
     e.preventDefault();
     const isId = lang === "id";
     const msg = isId
-      ? `Halo TravelGo!\n\nSaya ingin memesan driver.\n\n` +
+      ? `Halo TravelJimb!\n\nSaya ingin memesan driver.\n\n` +
       `--- Detail Pemesanan ---\n` +
       `Nama: ${form.name}\n` +
       `WA: ${form.phone}` +
@@ -21,7 +21,7 @@ export function Contact() {
       `${form.date ? `\nTanggal: ${form.date}` : ""}` +
       `${form.msg ? `\nPesan: ${form.msg}` : ""}` +
       `\n\nMohon info lebih lanjut. Terima kasih!`
-      : `Hello TravelGo!\n\nI'd like to book a driver.\n\n` +
+      : `Hello TravelJimb!\n\nI'd like to book a driver.\n\n` +
       `--- Booking Details ---\n` +
       `Name: ${form.name}\n` +
       `WA: ${form.phone}` +

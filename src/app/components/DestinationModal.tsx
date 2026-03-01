@@ -219,7 +219,7 @@ export function DestinationModal({ dest, onClose }: Props) {
                   ];
 
                   const msg = isId
-                    ? `Halo TravelGo!\nSaya ingin memesan driver untuk perjalanan ke *${dest.name}*.\n\n` +
+                    ? `Halo TravelJimb!\nSaya ingin memesan driver untuk perjalanan ke *${dest.name}*.\n\n` +
                     `═══════════════════\n` +
                     `   *${dest.name.toUpperCase()}*\n` +
                     `   ${dest.tag}\n` +
@@ -234,7 +234,7 @@ export function DestinationModal({ dest, onClose }: Props) {
                     `⛔ *Belum Termasuk:*\n` +
                     notInclId.map((x) => `   • ${x}`).join("\n") + `\n\n` +
                     `Mohon info lebih lanjut. Terima kasih!`
-                    : `Hello TravelGo!\nI'd like to book a driver for a trip to *${dest.name}*.\n\n` +
+                    : `Hello TravelJimb!\nI'd like to book a driver for a trip to *${dest.name}*.\n\n` +
                     `═══════════════════\n` +
                     `   *${dest.name.toUpperCase()}*\n` +
                     `   ${dest.tag}\n` +

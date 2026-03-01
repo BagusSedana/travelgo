@@ -70,7 +70,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             Admin Panel
           </h1>
           <p className="text-white/30" style={{ fontSize: "13px", fontWeight: 300 }}>
-            TravelGo — Masuk dengan akun Supabase
+            TravelJimb — Masuk dengan akun Supabase
           </p>
         </div>
 
@@ -164,7 +164,7 @@ function Sidebar({
             </div>
             <div>
               <p className="text-white" style={{ fontSize: "14px", fontWeight: 500 }}>
-                TravelGo
+                TravelJimb
               </p>
               <p className="text-white/30" style={{ fontSize: "10px", fontWeight: 400 }}>
                 Admin Panel
@@ -278,7 +278,7 @@ function DashboardTab() {
           Dashboard
         </h2>
         <p className="text-white/30" style={{ fontSize: "13px", fontWeight: 300 }}>
-          Ringkasan aktivitas TravelGo hari ini
+          Ringkasan aktivitas TravelJimb hari ini
         </p>
       </div>
 
@@ -405,9 +405,9 @@ function DestinationsTab() {
               <div
                 key={h || i}
                 className={`${i === 0 ? "col-span-5 sm:col-span-3" :
-                    i === 4 ? "col-span-4 sm:col-span-3 text-right" :
-                      i === 3 ? "col-span-3 sm:col-span-2" :
-                        "hidden sm:block sm:col-span-2"
+                  i === 4 ? "col-span-4 sm:col-span-3 text-right" :
+                    i === 3 ? "col-span-3 sm:col-span-2" :
+                      "hidden sm:block sm:col-span-2"
                   } text-white/20 px-1 sm:px-2`}
                 style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}
               >
@@ -863,7 +863,7 @@ export function AdminPanel() {
           <button onClick={() => setMobileMenuOpen(true)} className="bg-transparent border-none text-white/50 cursor-pointer">
             <Menu size={24} />
           </button>
-          <div className="font-medium text-white/90">TravelGo Admin</div>
+          <div className="font-medium text-white/90">TravelJimb Admin</div>
         </header>
 
         <main className="flex-1 p-5 md:p-8 lg:p-10 overflow-y-auto">

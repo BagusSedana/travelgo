@@ -28,7 +28,7 @@ export function Footer() {
             lineHeight: 1,
           }}
         >
-          TravelGo
+          TravelJimb
         </motion.p>
 
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -37,7 +37,7 @@ export function Footer() {
               className="text-white/20"
               style={{ fontFamily: "'Inter', sans-serif", fontSize: "10px", fontWeight: 400, letterSpacing: "0.15em", textTransform: "uppercase" }}
             >
-              TravelGo
+              TravelJimb
             </span>
             <div className="flex gap-8">
               {links.map((l) => (
@@ -61,7 +61,7 @@ export function Footer() {
             className="text-white/10"
             style={{ fontFamily: "'Inter', sans-serif", fontSize: "10px", fontWeight: 400 }}
           >
-            &copy; 2026 TravelGo. Bali, Indonesia.
+            &copy; 2026 TravelJimb. Bali, Indonesia.
           </p>
         </div>
       </div>

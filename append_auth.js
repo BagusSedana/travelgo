@@ -7,12 +7,12 @@ export function verifyPin(pin: string): boolean {
 }
 
 export function isAdminLoggedIn(): boolean {
-  return sessionStorage.getItem("travelgo_admin") === "true";
+  return sessionStorage.getItem("traveljimb_admin") === "true";
 }
 
 export function setAdminLoggedIn(v: boolean) {
-  if (v) sessionStorage.setItem("travelgo_admin", "true");
-  else sessionStorage.removeItem("travelgo_admin");
+  if (v) sessionStorage.setItem("traveljimb_admin", "true");
+  else sessionStorage.removeItem("traveljimb_admin");
 }
 `;
 fs.appendFileSync('src/app/components/store.ts', content);
