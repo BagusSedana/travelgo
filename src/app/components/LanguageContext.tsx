@@ -130,8 +130,8 @@ const t: Translations = {
   footerRights: { id: "Hak cipta", en: "All rights reserved" },
 };
 
-export const WA_NUMBER = "6281337343934";
-export const WA_DISPLAY = "+62 813-3734-3934";
+export const WA_NUMBER = "6281353552955";
+export const WA_DISPLAY = "+62 813-5355-2955";
 export const EMAIL = "Glorygrebjimb@gmail.com";
 export const BASE_LOCATION = { id: "Kuta Selatan, Jimbaran, Badung, Bali", en: "South Kuta, Jimbaran, Badung, Bali" };
 
@@ -147,7 +147,7 @@ type LangCtx = {
 
 const LanguageContext = createContext<LangCtx>({
   lang: "id",
-  setLang: () => {},
+  setLang: () => { },
   t: (key) => key,
 });
 
