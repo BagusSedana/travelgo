@@ -1,15 +1,19 @@
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useLang } from "./LanguageContext";
 import { DestinationModal, type Destination } from "./DestinationModal";
-import { getDestinationsWithPrices } from "./store";
+import { getDestinationsWithPrices, DEFAULT_DESTINATIONS } from "./store";
 
 export function Destinations() {
   const { t } = useLang();
   const [selected, setSelected] = useState<Destination | null>(null);
-  const destinations = getDestinationsWithPrices();
+  const [destinations, setDestinations] = useState<Destination[]>(DEFAULT_DESTINATIONS);
+
+  useEffect(() => {
+    getDestinationsWithPrices().then(setDestinations);
+  }, []);
 
   return (
     <>

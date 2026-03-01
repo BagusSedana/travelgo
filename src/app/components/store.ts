@@ -1,4 +1,4 @@
-// Shared data store using localStorage for destinations pricing & booking tracking
+import { supabase } from './supabase';
 
 export type DestinationData = {
   name: string;
@@ -25,10 +25,6 @@ export type BookingEntry = {
     msg?: string;
   };
 };
-
-const PRICES_KEY = "travelgo_prices";
-const BOOKINGS_KEY = "travelgo_bookings";
-const ADMIN_PIN = "travelgo2017";
 
 // Default destinations data
 export const DEFAULT_DESTINATIONS: DestinationData[] = [
@@ -160,64 +156,81 @@ export const DEFAULT_DESTINATIONS: DestinationData[] = [
   },
 ];
 
-// --- Price management ---
-
-export function getPriceOverrides(): Record<string, string> {
-  try {
-    const raw = localStorage.getItem(PRICES_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
+export async function getPriceOverrides(): Promise<Record<string, string>> {
+  const { data, error } = await supabase.from('price_overrides').select('dest_name, price');
+  if (error || !data) return {};
+  const overrides: Record<string, string> = {};
+  data.forEach((row: any) => {
+    overrides[row.dest_name] = row.price;
+  });
+  return overrides;
 }
 
-export function savePriceOverride(destName: string, newPrice: string) {
-  const overrides = getPriceOverrides();
-  overrides[destName] = newPrice;
-  localStorage.setItem(PRICES_KEY, JSON.stringify(overrides));
+export async function savePriceOverride(destName: string, newPrice: string) {
+  await supabase
+    .from('price_overrides')
+    .upsert({ dest_name: destName, price: newPrice, updated_at: new Date().toISOString() });
 }
 
-export function getDestinationsWithPrices(): DestinationData[] {
-  const overrides = getPriceOverrides();
+export async function getDestinationsWithPrices(): Promise<DestinationData[]> {
+  const overrides = await getPriceOverrides();
   return DEFAULT_DESTINATIONS.map((d) => ({
     ...d,
     price: overrides[d.name] || d.price,
   }));
 }
 
-// --- Booking tracking ---
+export async function getBookings(): Promise<BookingEntry[]> {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .order('timestamp', { ascending: false });
+  if (error || !data) return [];
 
-export function getBookings(): BookingEntry[] {
-  try {
-    const raw = localStorage.getItem(BOOKINGS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+  return data.map((row: any) => ({
+    id: row.id,
+    timestamp: row.timestamp,
+    destination: row.destination,
+    tag: row.tag || '',
+    price: row.price || '',
+    source: row.source,
+    formData: row.form_name ? {
+      name: row.form_name,
+      phone: row.form_phone,
+      dest: row.form_dest,
+      date: row.form_date,
+      msg: row.form_msg
+    } : undefined
+  }));
 }
 
-export function addBooking(entry: Omit<BookingEntry, "id" | "timestamp">) {
-  const bookings = getBookings();
-  const newEntry: BookingEntry = {
-    ...entry,
-    id: crypto.randomUUID(),
-    timestamp: new Date().toISOString(),
+export async function addBooking(entry: Omit<BookingEntry, "id" | "timestamp">) {
+  const insertData = {
+    destination: entry.destination,
+    tag: entry.tag,
+    price: entry.price,
+    source: entry.source,
+    form_name: entry.formData?.name || null,
+    form_phone: entry.formData?.phone || null,
+    form_dest: entry.formData?.dest || null,
+    form_date: entry.formData?.date || null,
+    form_msg: entry.formData?.msg || null,
   };
-  bookings.unshift(newEntry);
-  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
-  return newEntry;
+
+  await supabase.from('bookings').insert([insertData]);
 }
 
-export function clearBookings() {
-  localStorage.setItem(BOOKINGS_KEY, JSON.stringify([]));
+export async function clearBookings() {
+  await supabase.from('bookings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 }
 
-export function getTodayBookings(): BookingEntry[] {
+export async function getTodayBookings(): Promise<BookingEntry[]> {
   const today = new Date().toISOString().slice(0, 10);
-  return getBookings().filter((b) => b.timestamp.slice(0, 10) === today);
+  const bookings = await getBookings();
+  return bookings.filter((b) => b.timestamp.slice(0, 10) === today);
 }
 
-// --- Admin auth ---
+const ADMIN_PIN = "travelgo2017";
 
 export function verifyPin(pin: string): boolean {
   return pin === ADMIN_PIN;

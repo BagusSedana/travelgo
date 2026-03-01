@@ -9,42 +9,44 @@ export function Contact() {
   const [form, setForm] = useState({ name: "", phone: "", dest: "", date: "", msg: "" });
   const [sent, setSent] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const isId = lang === "id";
     const msg = isId
       ? `Halo TravelGo!\n\nSaya ingin memesan driver.\n\n` +
-        `--- Detail Pemesanan ---\n` +
-        `Nama: ${form.name}\n` +
-        `WA: ${form.phone}` +
-        `${form.dest ? `\nDestinasi: ${form.dest}` : ""}` +
-        `${form.date ? `\nTanggal: ${form.date}` : ""}` +
-        `${form.msg ? `\nPesan: ${form.msg}` : ""}` +
-        `\n\nMohon info lebih lanjut. Terima kasih!`
+      `--- Detail Pemesanan ---\n` +
+      `Nama: ${form.name}\n` +
+      `WA: ${form.phone}` +
+      `${form.dest ? `\nDestinasi: ${form.dest}` : ""}` +
+      `${form.date ? `\nTanggal: ${form.date}` : ""}` +
+      `${form.msg ? `\nPesan: ${form.msg}` : ""}` +
+      `\n\nMohon info lebih lanjut. Terima kasih!`
       : `Hello TravelGo!\n\nI'd like to book a driver.\n\n` +
-        `--- Booking Details ---\n` +
-        `Name: ${form.name}\n` +
-        `WA: ${form.phone}` +
-        `${form.dest ? `\nDestination: ${form.dest}` : ""}` +
-        `${form.date ? `\nDate: ${form.date}` : ""}` +
-        `${form.msg ? `\nMessage: ${form.msg}` : ""}` +
-        `\n\nPlease send me more details. Thank you!\n\n` +
-        `──────────────────\n` +
-        `Terjemahan untuk driver:\n\n` +
-        `Tamu ini ingin memesan driver.\n` +
-        `Nama: ${form.name}\n` +
-        `WA: ${form.phone}` +
-        `${form.dest ? `\nDestinasi: ${form.dest}` : ""}` +
-        `${form.date ? `\nTanggal: ${form.date}` : ""}` +
-        `${form.msg ? `\nPesan: ${form.msg}` : ""}`;
+      `--- Booking Details ---\n` +
+      `Name: ${form.name}\n` +
+      `WA: ${form.phone}` +
+      `${form.dest ? `\nDestination: ${form.dest}` : ""}` +
+      `${form.date ? `\nDate: ${form.date}` : ""}` +
+      `${form.msg ? `\nMessage: ${form.msg}` : ""}` +
+      `\n\nPlease send me more details. Thank you!\n\n` +
+      `──────────────────\n` +
+      `Terjemahan untuk driver:\n\n` +
+      `Tamu ini ingin memesan driver.\n` +
+      `Nama: ${form.name}\n` +
+      `WA: ${form.phone}` +
+      `${form.dest ? `\nDestinasi: ${form.dest}` : ""}` +
+      `${form.date ? `\nTanggal: ${form.date}` : ""}` +
+      `${form.msg ? `\nPesan: ${form.msg}` : ""}`;
     window.open(buildWaUrl(msg), "_blank");
-    addBooking({
+
+    await addBooking({
       destination: form.dest || "Custom",
       tag: "Contact Form",
       price: "-",
       source: "form",
       formData: { ...form },
     });
+
     setSent(true);
     setTimeout(() => setSent(false), 3000);
     setForm({ name: "", phone: "", dest: "", date: "", msg: "" });

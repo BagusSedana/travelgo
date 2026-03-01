@@ -74,9 +74,8 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             value={pin}
             onChange={(e) => setPin(e.target.value)}
             placeholder="PIN Admin"
-            className={`w-full bg-white/5 border ${
-              error ? "border-red-500/50" : "border-white/10"
-            } rounded-xl px-5 py-4 text-white placeholder:text-white/20 outline-none focus:border-white/30 transition-colors text-center`}
+            className={`w-full bg-white/5 border ${error ? "border-red-500/50" : "border-white/10"
+              } rounded-xl px-5 py-4 text-white placeholder:text-white/20 outline-none focus:border-white/30 transition-colors text-center`}
             style={{ fontSize: "16px", fontWeight: 300, letterSpacing: "0.3em" }}
             autoFocus
           />
@@ -152,11 +151,10 @@ function Sidebar({
           <button
             key={tab.id}
             onClick={() => setActive(tab.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-none cursor-pointer transition-all ${
-              active === tab.id
-                ? "bg-white/10 text-white"
-                : "bg-transparent text-white/30 hover:text-white/60 hover:bg-white/5"
-            }`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-none cursor-pointer transition-all ${active === tab.id
+              ? "bg-white/10 text-white"
+              : "bg-transparent text-white/30 hover:text-white/60 hover:bg-white/5"
+              }`}
             style={{ fontSize: "13px", fontWeight: 400 }}
           >
             {tab.icon}
@@ -181,9 +179,25 @@ function Sidebar({
 
 // ─── Dashboard Tab ───────────────────────────────────────
 function DashboardTab() {
-  const todayBookings = getTodayBookings();
-  const allBookings = getBookings();
-  const destinations = getDestinationsWithPrices();
+  const [todayBookings, setTodayBookings] = useState<BookingEntry[]>([]);
+  const [allBookings, setAllBookings] = useState<BookingEntry[]>([]);
+  const [destinations, setDestinations] = useState<DestinationData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const [today, all, dests] = await Promise.all([
+        getTodayBookings(),
+        getBookings(),
+        getDestinationsWithPrices(),
+      ]);
+      setTodayBookings(today);
+      setAllBookings(all);
+      setDestinations(dests);
+      setLoading(false);
+    }
+    loadData();
+  }, []);
 
   // Most popular destination
   const destCount: Record<string, number> = {};
@@ -221,6 +235,10 @@ function DashboardTab() {
       color: "bg-amber-500/10 text-amber-400",
     },
   ];
+
+  if (loading) {
+    return <div className="p-10 text-center text-white/50">Memuat data...</div>;
+  }
 
   return (
     <div>
@@ -309,35 +327,59 @@ function DashboardTab() {
 
 // ─── Pricing Tab ─────────────────────────────────────────
 function PricingTab() {
-  const [destinations, setDestinations] = useState<DestinationData[]>(getDestinationsWithPrices());
+  const [destinations, setDestinations] = useState<DestinationData[]>([]);
+  const [overrides, setOverrides] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [saved, setSaved] = useState<string | null>(null);
 
-  const overrides = getPriceOverrides();
+  useEffect(() => {
+    async function load() {
+      const dests = await getDestinationsWithPrices();
+      const ov = await getPriceOverrides();
+      setDestinations(dests);
+      setOverrides(ov);
+      setLoading(false);
+    }
+    load();
+  }, []);
 
   const startEdit = (idx: number) => {
     setEditingIdx(idx);
     setEditPrice(destinations[idx].price);
   };
 
-  const savePrice = (idx: number) => {
+  const savePrice = async (idx: number) => {
     if (!editPrice.trim()) return;
-    savePriceOverride(destinations[idx].name, editPrice.trim());
-    setDestinations(getDestinationsWithPrices());
-    setSaved(destinations[idx].name);
+    const destName = destinations[idx].name;
+    await savePriceOverride(destName, editPrice.trim());
+
+    const dests = await getDestinationsWithPrices();
+    const ov = await getPriceOverrides();
+    setDestinations(dests);
+    setOverrides(ov);
+
+    setSaved(destName);
     setEditingIdx(null);
     setTimeout(() => setSaved(null), 2000);
   };
 
-  const resetPrice = (idx: number) => {
+  const resetPrice = async (idx: number) => {
     const name = destinations[idx].name;
     const def = DEFAULT_DESTINATIONS.find((d) => d.name === name);
     if (def) {
-      savePriceOverride(name, def.price);
-      setDestinations(getDestinationsWithPrices());
+      await savePriceOverride(name, def.price);
+      const dests = await getDestinationsWithPrices();
+      const ov = await getPriceOverrides();
+      setDestinations(dests);
+      setOverrides(ov);
     }
   };
+
+  if (loading) {
+    return <div className="p-10 text-center text-white/50">Memuat data...</div>;
+  }
 
   return (
     <div>
@@ -346,7 +388,7 @@ function PricingTab() {
           Harga Destinasi
         </h2>
         <p className="text-white/30" style={{ fontSize: "13px", fontWeight: 300 }}>
-          Klik harga untuk mengedit. Perubahan langsung tampil di landing page.
+          Klik harga untuk mengedit. Perubahan langsung tersimpan di database.
         </p>
       </div>
 
@@ -421,9 +463,8 @@ function PricingTab() {
                   ) : (
                     <button
                       onClick={() => startEdit(i)}
-                      className={`border-none bg-transparent cursor-pointer hover:text-white transition-colors ${
-                        isSaved ? "text-emerald-400" : "text-white/60"
-                      }`}
+                      className={`border-none bg-transparent cursor-pointer hover:text-white transition-colors ${isSaved ? "text-emerald-400" : "text-white/60"
+                        }`}
                       style={{ fontSize: "14px", fontWeight: 400 }}
                     >
                       {d.price}
@@ -464,15 +505,26 @@ function PricingTab() {
 
 // ─── Orders Tab ──────────────────────────────────────────
 function OrdersTab() {
-  const [bookings, setBookings] = useState<BookingEntry[]>(getBookings());
+  const [bookings, setBookings] = useState<BookingEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "today">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const filtered = filter === "today" ? getTodayBookings() : bookings;
+  useEffect(() => {
+    async function load() {
+      const data = await getBookings();
+      setBookings(data);
+      setLoading(false);
+    }
+    load();
+  }, []);
 
-  const handleClear = () => {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const filtered = filter === "today" ? bookings.filter(b => b.timestamp.slice(0, 10) === todayStr) : bookings;
+
+  const handleClear = async () => {
     if (window.confirm("Yakin hapus semua riwayat order?")) {
-      clearBookings();
+      await clearBookings();
       setBookings([]);
     }
   };
@@ -486,6 +538,10 @@ function OrdersTab() {
       default: return s;
     }
   };
+
+  if (loading) {
+    return <div className="p-10 text-center text-white/50">Memuat riwayat order...</div>;
+  }
 
   return (
     <div>
@@ -504,9 +560,8 @@ function OrdersTab() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-4 py-2 border-none cursor-pointer transition-colors ${
-                  filter === f ? "bg-white/10 text-white" : "bg-transparent text-white/30 hover:text-white/50"
-                }`}
+                className={`px-4 py-2 border-none cursor-pointer transition-colors ${filter === f ? "bg-white/10 text-white" : "bg-transparent text-white/30 hover:text-white/50"
+                  }`}
                 style={{ fontSize: "11px", fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase" }}
               >
                 {f === "all" ? "Semua" : "Hari Ini"}
