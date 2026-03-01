@@ -21,15 +21,14 @@ import {
   loginAdmin,
   logoutAdmin,
   checkSession,
-  getDestinationsWithPrices,
-  savePriceOverride,
+  getDestinations,
+  updateDestination,
   getBookings,
   getTodayBookings,
   clearBookings,
+  updateBookingStatus,
   type BookingEntry,
   type DestinationData,
-  DEFAULT_DESTINATIONS,
-  getPriceOverrides,
 } from "../store";
 
 const font: React.CSSProperties = { fontFamily: "'Inter', sans-serif" };
@@ -123,7 +122,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 }
 
 // ─── Sidebar ─────────────────────────────────────────────
-type Tab = "dashboard" | "pricing" | "orders";
+type Tab = "dashboard" | "destinations" | "orders";
 
 function Sidebar({
   active,
@@ -136,7 +135,7 @@ function Sidebar({
 }) {
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
-    { id: "pricing", label: "Harga Destinasi", icon: <Tag size={18} /> },
+    { id: "destinations", label: "Destinasi", icon: <Tag size={18} /> },
     { id: "orders", label: "Riwayat Order", icon: <ClipboardList size={18} /> },
   ];
 
@@ -206,7 +205,7 @@ function DashboardTab() {
       const [today, all, dests] = await Promise.all([
         getTodayBookings(),
         getBookings(),
-        getDestinationsWithPrices(),
+        getDestinations(),
       ]);
       setTodayBookings(today);
       setAllBookings(all);
@@ -342,56 +341,31 @@ function DashboardTab() {
   );
 }
 
-// ─── Pricing Tab ─────────────────────────────────────────
-function PricingTab() {
+// ─── Destinations Tab ────────────────────────────────────
+function DestinationsTab() {
   const [destinations, setDestinations] = useState<DestinationData[]>([]);
-  const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  const [editPrice, setEditPrice] = useState("");
-  const [saved, setSaved] = useState<string | null>(null);
+  const [editData, setEditData] = useState<DestinationData | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     async function load() {
-      const dests = await getDestinationsWithPrices();
-      const ov = await getPriceOverrides();
+      const dests = await getDestinations();
       setDestinations(dests);
-      setOverrides(ov);
       setLoading(false);
     }
     load();
   }, []);
 
-  const startEdit = (idx: number) => {
-    setEditingIdx(idx);
-    setEditPrice(destinations[idx].price);
-  };
-
-  const savePrice = async (idx: number) => {
-    if (!editPrice.trim()) return;
-    const destName = destinations[idx].name;
-    await savePriceOverride(destName, editPrice.trim());
-
-    const dests = await getDestinationsWithPrices();
-    const ov = await getPriceOverrides();
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editData || !editData.id) return;
+    setSaving(true);
+    await updateDestination(editData.id, editData);
+    const dests = await getDestinations();
     setDestinations(dests);
-    setOverrides(ov);
-
-    setSaved(destName);
-    setEditingIdx(null);
-    setTimeout(() => setSaved(null), 2000);
-  };
-
-  const resetPrice = async (idx: number) => {
-    const name = destinations[idx].name;
-    const def = DEFAULT_DESTINATIONS.find((d) => d.name === name);
-    if (def) {
-      await savePriceOverride(name, def.price);
-      const dests = await getDestinationsWithPrices();
-      const ov = await getPriceOverrides();
-      setDestinations(dests);
-      setOverrides(ov);
-    }
+    setEditData(null);
+    setSaving(false);
   };
 
   if (loading) {
@@ -402,120 +376,183 @@ function PricingTab() {
     <div>
       <div className="mb-8">
         <h2 className="text-white mb-1" style={{ fontSize: "24px", fontWeight: 200, letterSpacing: "-0.03em" }}>
-          Harga Destinasi
+          Destinasi
         </h2>
         <p className="text-white/30" style={{ fontSize: "13px", fontWeight: 300 }}>
-          Klik harga untuk mengedit. Perubahan langsung tersimpan di database.
+          Kelola informasi destinasi yang ditampilkan di website.
         </p>
       </div>
 
       <div className="bg-white/[0.03] border border-white/5 rounded-2xl overflow-hidden">
-        {/* Header */}
         <div className="grid grid-cols-12 gap-4 px-5 py-3 border-b border-white/5">
-          {["Destinasi", "Tag", "Durasi", "Harga", ""].map((h, i) => (
+          {["Destinasi", "Tag", "Durasi", "Harga", "Aksi"].map((h, i) => (
             <div
               key={h || i}
-              className={`${i === 0 ? "col-span-3" : i === 4 ? "col-span-2" : "col-span-2"} text-white/20`}
+              className={`${i === 0 ? "col-span-3" : i === 4 ? "col-span-3 text-right" : "col-span-2"} text-white/20 px-2`}
               style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}
             >
               {h}
             </div>
           ))}
-          <div className="col-span-3" />
         </div>
 
-        {/* Rows */}
         <div className="divide-y divide-white/5">
-          {destinations.map((d, i) => {
-            const isEditing = editingIdx === i;
-            const isModified = !!overrides[d.name];
-            const isSaved = saved === d.name;
-
-            return (
-              <div key={d.name} className="grid grid-cols-12 gap-4 items-center px-5 py-4 hover:bg-white/[0.02] transition-colors">
-                {/* Name */}
-                <div className="col-span-3 flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${d.image})` }}
-                  />
-                  <span className="text-white" style={{ fontSize: "13px", fontWeight: 400 }}>
-                    {d.name}
-                  </span>
-                </div>
-
-                {/* Tag */}
-                <div className="col-span-2">
-                  <span className="text-white/30" style={{ fontSize: "12px", fontWeight: 300 }}>
-                    {d.tag}
-                  </span>
-                </div>
-
-                {/* Duration */}
-                <div className="col-span-2">
-                  <span className="text-white/30" style={{ fontSize: "12px", fontWeight: 300 }}>
-                    {d.duration.id}
-                  </span>
-                </div>
-
-                {/* Price */}
-                <div className="col-span-2">
-                  {isEditing ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        value={editPrice}
-                        onChange={(e) => setEditPrice(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && savePrice(i)}
-                        className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white outline-none w-full"
-                        style={{ fontSize: "13px", fontWeight: 400 }}
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => savePrice(i)}
-                        className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border-none cursor-pointer hover:bg-emerald-500/30 transition-colors flex-shrink-0"
-                      >
-                        <Save size={14} />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => startEdit(i)}
-                      className={`border-none bg-transparent cursor-pointer hover:text-white transition-colors ${isSaved ? "text-emerald-400" : "text-white/60"
-                        }`}
-                      style={{ fontSize: "14px", fontWeight: 400 }}
-                    >
-                      {d.price}
-                      {isSaved && (
-                        <span className="ml-2 text-emerald-400" style={{ fontSize: "10px" }}>
-                          Tersimpan!
-                        </span>
-                      )}
-                    </button>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="col-span-3 flex items-center justify-end gap-2">
-                  {isModified && (
-                    <button
-                      onClick={() => resetPrice(i)}
-                      className="text-white/20 hover:text-amber-400 border-none bg-transparent cursor-pointer transition-colors flex items-center gap-1"
-                      style={{ fontSize: "10px", fontWeight: 400 }}
-                    >
-                      Reset
-                    </button>
-                  )}
-                  {isModified && (
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400" style={{ fontSize: "9px", fontWeight: 500, letterSpacing: "0.05em" }}>
-                      DIUBAH
-                    </span>
-                  )}
-                </div>
+          {destinations.map((d) => (
+            <div key={d.id} className="grid grid-cols-12 gap-4 items-center px-5 py-4 hover:bg-white/[0.02] transition-colors">
+              <div className="col-span-3 flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${d.image})` }}
+                />
+                <span className="text-white" style={{ fontSize: "13px", fontWeight: 400 }}>
+                  {d.name}
+                </span>
               </div>
-            );
-          })}
+              <div className="col-span-2 px-2">
+                <span className="text-white/30" style={{ fontSize: "12px", fontWeight: 300 }}>{d.tag}</span>
+              </div>
+              <div className="col-span-2 px-2">
+                <span className="text-white/30" style={{ fontSize: "12px", fontWeight: 300 }}>{d.duration.id}</span>
+              </div>
+              <div className="col-span-2 px-2">
+                <span className="text-white/90" style={{ fontSize: "13px", fontWeight: 400 }}>{d.price}</span>
+              </div>
+              <div className="col-span-3 flex justify-end">
+                <button
+                  onClick={() => setEditData(d)}
+                  className="px-4 py-2 rounded-xl bg-white/5 text-white/60 hover:text-white hover:bg-white/15 transition-colors border-none cursor-pointer"
+                  style={{ fontSize: "11px", fontWeight: 500 }}
+                >
+                  Edit Lengkap
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
+
+      {editData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between flex-shrink-0">
+              <h3 className="text-white" style={{ fontSize: "18px", fontWeight: 400 }}>Edit Destinasi</h3>
+              <button
+                onClick={() => setEditData(null)}
+                className="text-white/40 hover:text-white bg-transparent border-none cursor-pointer text-xl"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1">
+              <form id="edit-dest-form" onSubmit={handleSave} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white/40 mb-1" style={{ fontSize: "11px" }}>Nama</label>
+                    <input
+                      value={editData.name}
+                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/40 mb-1" style={{ fontSize: "11px" }}>Harga</label>
+                    <input
+                      value={editData.price}
+                      onChange={(e) => setEditData({ ...editData, price: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-white/40 mb-1" style={{ fontSize: "11px" }}>Tag</label>
+                  <input
+                    value={editData.tag}
+                    onChange={(e) => setEditData({ ...editData, tag: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white/40 mb-1" style={{ fontSize: "11px" }}>URL Gambar</label>
+                  <input
+                    value={editData.image}
+                    onChange={(e) => setEditData({ ...editData, image: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white/40 mb-1" style={{ fontSize: "11px" }}>Durasi (ID)</label>
+                    <input
+                      value={editData.duration.id}
+                      onChange={(e) => setEditData({ ...editData, duration: { ...editData.duration, id: e.target.value } })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/40 mb-1" style={{ fontSize: "11px" }}>Durasi (EN)</label>
+                    <input
+                      value={editData.duration.en}
+                      onChange={(e) => setEditData({ ...editData, duration: { ...editData.duration, en: e.target.value } })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white/40 mb-1" style={{ fontSize: "11px" }}>Jarak (ID)</label>
+                    <input
+                      value={editData.distance.id}
+                      onChange={(e) => setEditData({ ...editData, distance: { ...editData.distance, id: e.target.value } })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/40 mb-1" style={{ fontSize: "11px" }}>Jarak (EN)</label>
+                    <input
+                      value={editData.distance.en}
+                      onChange={(e) => setEditData({ ...editData, distance: { ...editData.distance, en: e.target.value } })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30"
+                      required
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div className="p-6 border-t border-white/5 flex justify-end gap-3 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setEditData(null)}
+                className="px-6 py-3 rounded-xl bg-transparent border border-white/10 text-white/60 hover:text-white cursor-pointer transition-colors"
+                style={{ fontSize: "12px", fontWeight: 500 }}
+              >
+                Batal
+              </button>
+              <button
+                form="edit-dest-form"
+                type="submit"
+                disabled={saving}
+                className={`px-6 py-3 rounded-xl bg-white text-[#0a0a0a] border-none transition-colors ${saving ? "opacity-50 cursor-not-allowed" : "hover:bg-white/90 cursor-pointer"}`}
+                style={{ fontSize: "12px", fontWeight: 500 }}
+              >
+                {saving ? "Menyimpan..." : "Simpan Perubahan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -535,6 +572,23 @@ function OrdersTab() {
     }
     load();
   }, []);
+
+  const handleStatusChange = async (id: string, newStatus: "pending" | "sukses" | "cancel") => {
+    await updateBookingStatus(id, newStatus);
+    setBookings(bookings.map(b => b.id === id ? { ...b, status: newStatus } : b));
+  };
+
+  const getStatusColor = (status: string) => {
+    if (status === "sukses") return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    if (status === "cancel") return "bg-red-500/10 text-red-400 border-red-500/20";
+    return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+  };
+
+  const getStatusLabel = (status: string) => {
+    if (status === "sukses") return "Sukses";
+    if (status === "cancel") return "Cancel";
+    return "Pending";
+  };
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const filtered = filter === "today" ? bookings.filter(b => b.timestamp.slice(0, 10) === todayStr) : bookings;
@@ -626,7 +680,7 @@ function OrdersTab() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="text-white" style={{ fontSize: "14px", fontWeight: 400 }}>
+                      <span className="text-white bg-white/5" style={{ fontSize: "14px", fontWeight: 400 }}>
                         {b.destination}
                       </span>
                       <span className="px-2 py-0.5 rounded-full bg-white/5 text-white/30" style={{ fontSize: "10px", fontWeight: 400 }}>
@@ -639,6 +693,9 @@ function OrdersTab() {
                       )}
                     </div>
                     <div className="flex items-center gap-4">
+                      <span className={`px-2 py-0.5 rounded-full border ${getStatusColor(b.status)}`} style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                        {getStatusLabel(b.status)}
+                      </span>
                       <span className="text-white/20 flex items-center gap-1.5" style={{ fontSize: "11px", fontWeight: 300 }}>
                         <Calendar size={11} />
                         {new Date(b.timestamp).toLocaleDateString("id-ID", {
@@ -657,12 +714,39 @@ function OrdersTab() {
                       </span>
                     </div>
                   </div>
-                  <Eye size={16} className={`transition-colors ${isExpanded ? "text-white/40" : "text-white/10"}`} />
+                  <Eye size={16} className={`transition-colors flex-shrink-0 ${isExpanded ? "text-white/40" : "text-white/10"}`} />
                 </button>
 
                 {/* Expanded detail */}
                 {isExpanded && b.formData && (
                   <div className="border-t border-white/5 p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Status updater */}
+                    <div className="sm:col-span-2 mb-2 p-3 bg-white/[0.02] border border-white/5 rounded-xl flex items-center gap-3">
+                      <span className="text-white/40" style={{ fontSize: "11px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Ubah Status:</span>
+                      <div className="flex bg-black/20 rounded-lg overflow-hidden border border-white/5">
+                        <button
+                          onClick={() => handleStatusChange(b.id, "pending")}
+                          className={`px-3 py-1.5 border-none cursor-pointer transition-colors ${b.status === "pending" ? "bg-amber-500/20 text-amber-400" : "bg-transparent text-white/30 hover:text-white/50"}`}
+                          style={{ fontSize: "11px", fontWeight: 500 }}
+                        >
+                          Pending
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(b.id, "sukses")}
+                          className={`px-3 py-1.5 border-none cursor-pointer transition-colors ${b.status === "sukses" ? "bg-emerald-500/20 text-emerald-400" : "bg-transparent text-white/30 hover:text-white/50"}`}
+                          style={{ fontSize: "11px", fontWeight: 500 }}
+                        >
+                          Sukses
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(b.id, "cancel")}
+                          className={`px-3 py-1.5 border-none cursor-pointer transition-colors ${b.status === "cancel" ? "bg-red-500/20 text-red-400" : "bg-transparent text-white/30 hover:text-white/50"}`}
+                          style={{ fontSize: "11px", fontWeight: 500 }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                     {b.formData.name && (
                       <div className="flex items-center gap-3">
                         <User size={14} className="text-white/20" />
@@ -752,7 +836,7 @@ export function AdminPanel() {
       <Sidebar active={tab} setActive={setTab} onLogout={handleLogout} />
       <main className="flex-1 p-8 lg:p-10 overflow-y-auto">
         {tab === "dashboard" && <DashboardTab />}
-        {tab === "pricing" && <PricingTab />}
+        {tab === "destinations" && <DestinationsTab />}
         {tab === "orders" && <OrdersTab />}
       </main>
     </div>

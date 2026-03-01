@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useLang } from "./LanguageContext";
 import { DestinationModal, type Destination } from "./DestinationModal";
-import { getDestinationsWithPrices, DEFAULT_DESTINATIONS } from "./store";
+import { getDestinations, DEFAULT_DESTINATIONS } from "./store";
 
 export function Destinations() {
   const { t } = useLang();
@@ -12,7 +12,7 @@ export function Destinations() {
   const [destinations, setDestinations] = useState<Destination[]>(DEFAULT_DESTINATIONS);
 
   useEffect(() => {
-    getDestinationsWithPrices().then(setDestinations);
+    getDestinations().then(data => setDestinations(data as Destination[]));
   }, []);
 
   return (

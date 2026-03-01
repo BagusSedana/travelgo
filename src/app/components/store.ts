@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 
 export type DestinationData = {
+  id?: string;
   name: string;
   tag: string;
   price: string;
@@ -17,6 +18,7 @@ export type BookingEntry = {
   tag: string;
   price: string;
   source: "modal" | "form" | "hero" | "floating";
+  status: "pending" | "sukses" | "cancel";
   formData?: {
     name?: string;
     phone?: string;
@@ -156,28 +158,79 @@ export const DEFAULT_DESTINATIONS: DestinationData[] = [
   },
 ];
 
-export async function getPriceOverrides(): Promise<Record<string, string>> {
-  const { data, error } = await supabase.from('price_overrides').select('dest_name, price');
-  if (error || !data) return {};
-  const overrides: Record<string, string> = {};
-  data.forEach((row: any) => {
-    overrides[row.dest_name] = row.price;
-  });
-  return overrides;
-}
+export async function getDestinations(): Promise<DestinationData[]> {
+  const { data, error } = await supabase.from('destinations').select('*').order('created_at', { ascending: true });
 
-export async function savePriceOverride(destName: string, newPrice: string) {
-  await supabase
-    .from('price_overrides')
-    .upsert({ dest_name: destName, price: newPrice, updated_at: new Date().toISOString() });
-}
+  if (error || !data || data.length === 0) {
+    if (!error && data?.length === 0) {
+      // Seed the table if empty
+      const inserts = DEFAULT_DESTINATIONS.map(d => ({
+        name: d.name,
+        tag: d.tag,
+        price: d.price,
+        image: d.image,
+        duration_id: d.duration.id,
+        duration_en: d.duration.en,
+        distance_id: d.distance.id,
+        distance_en: d.distance.en,
+        highlights: d.highlights
+      }));
+      await supabase.from('destinations').insert(inserts);
+      return getDestinations(); // fetch again after seeding
+    }
+    return DEFAULT_DESTINATIONS;
+  }
 
-export async function getDestinationsWithPrices(): Promise<DestinationData[]> {
-  const overrides = await getPriceOverrides();
-  return DEFAULT_DESTINATIONS.map((d) => ({
-    ...d,
-    price: overrides[d.name] || d.price,
+  return data.map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    tag: row.tag,
+    price: row.price,
+    image: row.image,
+    duration: { id: row.duration_id, en: row.duration_en },
+    distance: { id: row.distance_id, en: row.distance_en },
+    highlights: row.highlights || []
   }));
+}
+
+export async function updateDestination(id: string, data: Partial<Omit<DestinationData, 'id'>>) {
+  const updatePayload: any = {};
+  if (data.name !== undefined) updatePayload.name = data.name;
+  if (data.tag !== undefined) updatePayload.tag = data.tag;
+  if (data.price !== undefined) updatePayload.price = data.price;
+  if (data.image !== undefined) updatePayload.image = data.image;
+  if (data.duration) {
+    updatePayload.duration_id = data.duration.id;
+    updatePayload.duration_en = data.duration.en;
+  }
+  if (data.distance) {
+    updatePayload.distance_id = data.distance.id;
+    updatePayload.distance_en = data.distance.en;
+  }
+  if (data.highlights) updatePayload.highlights = data.highlights;
+
+  updatePayload.updated_at = new Date().toISOString();
+
+  await supabase.from('destinations').update(updatePayload).eq('id', id);
+}
+
+export async function addDestination(data: Omit<DestinationData, 'id'>) {
+  const insertPayload = {
+    name: data.name,
+    tag: data.tag,
+    price: data.price,
+    image: data.image,
+    duration_id: data.duration.id,
+    duration_en: data.duration.en,
+    distance_id: data.distance.id,
+    distance_en: data.distance.en,
+    highlights: data.highlights
+  };
+  await supabase.from('destinations').insert([insertPayload]);
+}
+
+export async function deleteDestination(id: string) {
+  await supabase.from('destinations').delete().eq('id', id);
 }
 
 export async function getBookings(): Promise<BookingEntry[]> {
@@ -194,6 +247,7 @@ export async function getBookings(): Promise<BookingEntry[]> {
     tag: row.tag || '',
     price: row.price || '',
     source: row.source,
+    status: row.status || 'pending',
     formData: row.form_name ? {
       name: row.form_name,
       phone: row.form_phone,
@@ -204,12 +258,13 @@ export async function getBookings(): Promise<BookingEntry[]> {
   }));
 }
 
-export async function addBooking(entry: Omit<BookingEntry, "id" | "timestamp">) {
+export async function addBooking(entry: Omit<BookingEntry, "id" | "timestamp" | "status">) {
   const insertData = {
     destination: entry.destination,
     tag: entry.tag,
     price: entry.price,
     source: entry.source,
+    status: "pending",
     form_name: entry.formData?.name || null,
     form_phone: entry.formData?.phone || null,
     form_dest: entry.formData?.dest || null,
@@ -218,6 +273,10 @@ export async function addBooking(entry: Omit<BookingEntry, "id" | "timestamp">) 
   };
 
   await supabase.from('bookings').insert([insertData]);
+}
+
+export async function updateBookingStatus(id: string, status: "pending" | "sukses" | "cancel") {
+  await supabase.from('bookings').update({ status }).eq('id', id);
 }
 
 export async function clearBookings() {
