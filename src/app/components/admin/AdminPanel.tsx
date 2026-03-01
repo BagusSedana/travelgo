@@ -16,6 +16,8 @@ import {
   Calendar,
   TrendingUp,
   Eye,
+  Menu,
+  X as CloseIcon
 } from "lucide-react";
 import {
   loginAdmin,
@@ -128,10 +130,14 @@ function Sidebar({
   active,
   setActive,
   onLogout,
+  isOpen,
+  setIsOpen,
 }: {
   active: Tab;
   setActive: (t: Tab) => void;
   onLogout: () => void;
+  isOpen: boolean;
+  setIsOpen: (o: boolean) => void;
 }) {
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
@@ -140,56 +146,65 @@ function Sidebar({
   ];
 
   return (
-    <aside
-      className="w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col min-h-screen flex-shrink-0"
-      style={font}
-    >
-      <div className="p-6 border-b border-white/5">
-        <a href="/" className="no-underline flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center">
-            <span className="text-white/60" style={{ fontSize: "12px", fontWeight: 600 }}>
-              TG
-            </span>
-          </div>
-          <div>
-            <p className="text-white" style={{ fontSize: "14px", fontWeight: 500 }}>
-              TravelGo
-            </p>
-            <p className="text-white/30" style={{ fontSize: "10px", fontWeight: 400 }}>
-              Admin Panel
-            </p>
-          </div>
-        </a>
-      </div>
+    <>
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity md:hidden ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsOpen(false)}
+      />
+      <aside
+        className={`fixed inset-y-0 left-0 w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col min-h-screen z-50 transform transition-transform duration-300 md:static md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        style={font}
+      >
+        <div className="p-6 border-b border-white/5 flex items-center justify-between">
+          <a href="/" className="no-underline flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center">
+              <span className="text-white/60" style={{ fontSize: "12px", fontWeight: 600 }}>
+                TG
+              </span>
+            </div>
+            <div>
+              <p className="text-white" style={{ fontSize: "14px", fontWeight: 500 }}>
+                TravelGo
+              </p>
+              <p className="text-white/30" style={{ fontSize: "10px", fontWeight: 400 }}>
+                Admin Panel
+              </p>
+            </div>
+          </a>
+          <button className="md:hidden bg-transparent border-none text-white/50 hover:text-white cursor-pointer" onClick={() => setIsOpen(false)}>
+            <CloseIcon size={20} />
+          </button>
+        </div>
 
-      <nav className="flex-1 p-4 space-y-1">
-        {tabs.map((tab) => (
+        <nav className="flex-1 p-4 space-y-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActive(tab.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-none cursor-pointer transition-all ${active === tab.id
+                ? "bg-white/10 text-white"
+                : "bg-transparent text-white/30 hover:text-white/60 hover:bg-white/5"
+                }`}
+              style={{ fontSize: "13px", fontWeight: 400 }}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="p-4 border-t border-white/5 mt-auto">
           <button
-            key={tab.id}
-            onClick={() => setActive(tab.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-none cursor-pointer transition-all ${active === tab.id
-              ? "bg-white/10 text-white"
-              : "bg-transparent text-white/30 hover:text-white/60 hover:bg-white/5"
-              }`}
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-none cursor-pointer bg-transparent text-white/20 hover:text-red-400 hover:bg-red-500/5 transition-all"
             style={{ fontSize: "13px", fontWeight: 400 }}
           >
-            {tab.icon}
-            {tab.label}
+            <LogOut size={18} />
+            Keluar
           </button>
-        ))}
-      </nav>
-
-      <div className="p-4 border-t border-white/5">
-        <button
-          onClick={onLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-none cursor-pointer bg-transparent text-white/20 hover:text-red-400 hover:bg-red-500/5 transition-all"
-          style={{ fontSize: "13px", fontWeight: 400 }}
-        >
-          <LogOut size={18} />
-          Keluar
-        </button>
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -383,51 +398,53 @@ function DestinationsTab() {
         </p>
       </div>
 
-      <div className="bg-white/[0.03] border border-white/5 rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-12 gap-4 px-5 py-3 border-b border-white/5">
-          {["Destinasi", "Tag", "Durasi", "Harga", "Aksi"].map((h, i) => (
-            <div
-              key={h || i}
-              className={`${i === 0 ? "col-span-3" : i === 4 ? "col-span-3 text-right" : "col-span-2"} text-white/20 px-2`}
-              style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}
-            >
-              {h}
-            </div>
-          ))}
-        </div>
+      <div className="bg-white/[0.03] border border-white/5 rounded-2xl overflow-x-auto">
+        <div className="min-w-[700px]">
+          <div className="grid grid-cols-12 gap-4 px-5 py-3 border-b border-white/5">
+            {["Destinasi", "Tag", "Durasi", "Harga", "Aksi"].map((h, i) => (
+              <div
+                key={h || i}
+                className={`${i === 0 ? "col-span-3" : i === 4 ? "col-span-3 text-right" : "col-span-2"} text-white/20 px-2`}
+                style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}
+              >
+                {h}
+              </div>
+            ))}
+          </div>
 
-        <div className="divide-y divide-white/5">
-          {destinations.map((d) => (
-            <div key={d.id} className="grid grid-cols-12 gap-4 items-center px-5 py-4 hover:bg-white/[0.02] transition-colors">
-              <div className="col-span-3 flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${d.image})` }}
-                />
-                <span className="text-white" style={{ fontSize: "13px", fontWeight: 400 }}>
-                  {d.name}
-                </span>
+          <div className="divide-y divide-white/5">
+            {destinations.map((d) => (
+              <div key={d.id} className="grid grid-cols-12 gap-4 items-center px-5 py-4 hover:bg-white/[0.02] transition-colors">
+                <div className="col-span-3 flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${d.image})` }}
+                  />
+                  <span className="text-white" style={{ fontSize: "13px", fontWeight: 400 }}>
+                    {d.name}
+                  </span>
+                </div>
+                <div className="col-span-2 px-2">
+                  <span className="text-white/30" style={{ fontSize: "12px", fontWeight: 300 }}>{d.tag}</span>
+                </div>
+                <div className="col-span-2 px-2">
+                  <span className="text-white/30" style={{ fontSize: "12px", fontWeight: 300 }}>{d.duration.id}</span>
+                </div>
+                <div className="col-span-2 px-2">
+                  <span className="text-white/90" style={{ fontSize: "13px", fontWeight: 400 }}>{d.price}</span>
+                </div>
+                <div className="col-span-3 flex justify-end">
+                  <button
+                    onClick={() => setEditData(d)}
+                    className="px-4 py-2 rounded-xl bg-white/5 text-white/60 hover:text-white hover:bg-white/15 transition-colors border-none cursor-pointer"
+                    style={{ fontSize: "11px", fontWeight: 500 }}
+                  >
+                    Edit Lengkap
+                  </button>
+                </div>
               </div>
-              <div className="col-span-2 px-2">
-                <span className="text-white/30" style={{ fontSize: "12px", fontWeight: 300 }}>{d.tag}</span>
-              </div>
-              <div className="col-span-2 px-2">
-                <span className="text-white/30" style={{ fontSize: "12px", fontWeight: 300 }}>{d.duration.id}</span>
-              </div>
-              <div className="col-span-2 px-2">
-                <span className="text-white/90" style={{ fontSize: "13px", fontWeight: 400 }}>{d.price}</span>
-              </div>
-              <div className="col-span-3 flex justify-end">
-                <button
-                  onClick={() => setEditData(d)}
-                  className="px-4 py-2 rounded-xl bg-white/5 text-white/60 hover:text-white hover:bg-white/15 transition-colors border-none cursor-pointer"
-                  style={{ fontSize: "11px", fontWeight: 500 }}
-                >
-                  Edit Lengkap
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
@@ -487,7 +504,7 @@ function DestinationsTab() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-white/40 mb-1" style={{ fontSize: "11px" }}>Durasi (ID)</label>
                     <input
@@ -508,7 +525,7 @@ function DestinationsTab() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-white/40 mb-1" style={{ fontSize: "11px" }}>Jarak (ID)</label>
                     <input
@@ -679,7 +696,7 @@ function OrdersTab() {
                     <MapPin size={16} className="text-white/30" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1 sm:mb-0">
                       <span className="text-white bg-white/5" style={{ fontSize: "14px", fontWeight: 400 }}>
                         {b.destination}
                       </span>
@@ -692,8 +709,8 @@ function OrdersTab() {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className={`px-2 py-0.5 rounded-full border ${getStatusColor(b.status)}`} style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 sm:mt-1">
+                      <span className={`w-fit px-2 py-0.5 rounded-full border ${getStatusColor(b.status)}`} style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase" }}>
                         {getStatusLabel(b.status)}
                       </span>
                       <span className="text-white/20 flex items-center gap-1.5" style={{ fontSize: "11px", fontWeight: 300 }}>
@@ -808,6 +825,7 @@ export function AdminPanel() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     async function verifySession() {
@@ -832,13 +850,23 @@ export function AdminPanel() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#111] text-white" style={font}>
-      <Sidebar active={tab} setActive={setTab} onLogout={handleLogout} />
-      <main className="flex-1 p-8 lg:p-10 overflow-y-auto">
-        {tab === "dashboard" && <DashboardTab />}
-        {tab === "destinations" && <DestinationsTab />}
-        {tab === "orders" && <OrdersTab />}
-      </main>
+    <div className="flex min-h-screen w-full bg-[#111] text-white overflow-hidden" style={font}>
+      <Sidebar active={tab} setActive={(t) => { setTab(t); setMobileMenuOpen(false); }} onLogout={handleLogout} isOpen={mobileMenuOpen} setIsOpen={setMobileMenuOpen} />
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Mobile Header */}
+        <header className="md:hidden bg-[#0a0a0a] border-b border-white/5 p-4 flex items-center gap-4 flex-shrink-0">
+          <button onClick={() => setMobileMenuOpen(true)} className="bg-transparent border-none text-white/50 cursor-pointer">
+            <Menu size={24} />
+          </button>
+          <div className="font-medium text-white/90">TravelGo Admin</div>
+        </header>
+
+        <main className="flex-1 p-5 md:p-8 lg:p-10 overflow-y-auto">
+          {tab === "dashboard" && <DashboardTab />}
+          {tab === "destinations" && <DestinationsTab />}
+          {tab === "orders" && <OrdersTab />}
+        </main>
+      </div>
     </div>
   );
 }
