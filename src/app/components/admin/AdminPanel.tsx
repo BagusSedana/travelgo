@@ -18,9 +18,9 @@ import {
   Eye,
 } from "lucide-react";
 import {
-  verifyPin,
-  isAdminLoggedIn,
-  setAdminLoggedIn,
+  loginAdmin,
+  logoutAdmin,
+  checkSession,
   getDestinationsWithPrices,
   savePriceOverride,
   getBookings,
@@ -36,17 +36,22 @@ const font: React.CSSProperties = { fontFamily: "'Inter', sans-serif" };
 
 // ─── Login Screen ─────────────────────────────────────────
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const [pin, setPin] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (verifyPin(pin)) {
-      setAdminLoggedIn(true);
+    setLoading(true);
+    const success = await loginAdmin(email, password);
+    setLoading(false);
+
+    if (success) {
       onLogin();
     } else {
       setError(true);
-      setTimeout(() => setError(false), 2000);
+      setTimeout(() => setError(false), 3000);
     }
   };
 
@@ -64,32 +69,44 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             Admin Panel
           </h1>
           <p className="text-white/30" style={{ fontSize: "13px", fontWeight: 300 }}>
-            TravelGo — Masukkan PIN untuk akses
+            TravelGo — Masuk dengan akun Supabase
           </p>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email Admin"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder:text-white/20 outline-none focus:border-white/30 transition-colors"
+            style={{ fontSize: "14px", fontWeight: 300 }}
+            autoFocus
+            required
+          />
           <input
             type="password"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            placeholder="PIN Admin"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
             className={`w-full bg-white/5 border ${error ? "border-red-500/50" : "border-white/10"
-              } rounded-xl px-5 py-4 text-white placeholder:text-white/20 outline-none focus:border-white/30 transition-colors text-center`}
-            style={{ fontSize: "16px", fontWeight: 300, letterSpacing: "0.3em" }}
-            autoFocus
+              } rounded-xl px-5 py-4 text-white placeholder:text-white/20 outline-none focus:border-white/30 transition-colors`}
+            style={{ fontSize: "16px", fontWeight: 300, letterSpacing: "0.1em" }}
+            required
           />
           {error && (
             <p className="text-red-400 text-center mt-3" style={{ fontSize: "12px", fontWeight: 400 }}>
-              PIN salah. Coba lagi.
+              Email atau Password salah. Coba lagi.
             </p>
           )}
           <button
             type="submit"
-            className="w-full mt-4 bg-white text-[#0a0a0a] py-4 rounded-xl cursor-pointer border-none hover:bg-white/90 transition-colors"
+            disabled={loading}
+            className={`w-full bg-white text-[#0a0a0a] py-4 rounded-xl border-none transition-colors ${loading ? "opacity-50 cursor-not-allowed" : "hover:bg-white/90 cursor-pointer"
+              }`}
             style={{ fontSize: "12px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}
           >
-            Masuk
+            {loading ? "Memproses..." : "Masuk"}
           </button>
         </form>
 
@@ -704,13 +721,27 @@ function OrdersTab() {
 
 // ─── Main Admin Panel ────────────────────────────────────
 export function AdminPanel() {
-  const [loggedIn, setLoggedIn] = useState(isAdminLoggedIn());
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [tab, setTab] = useState<Tab>("dashboard");
 
-  const handleLogout = () => {
-    setAdminLoggedIn(false);
+  useEffect(() => {
+    async function verifySession() {
+      const activeSession = await checkSession();
+      setLoggedIn(activeSession);
+      setCheckingSession(false);
+    }
+    verifySession();
+  }, []);
+
+  const handleLogout = async () => {
+    await logoutAdmin();
     setLoggedIn(false);
   };
+
+  if (checkingSession) {
+    return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white/50">Memeriksa sesi...</div>;
+  }
 
   if (!loggedIn) {
     return <LoginScreen onLogin={() => setLoggedIn(true)} />;

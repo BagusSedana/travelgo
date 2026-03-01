@@ -230,17 +230,19 @@ export async function getTodayBookings(): Promise<BookingEntry[]> {
   return bookings.filter((b) => b.timestamp.slice(0, 10) === today);
 }
 
-const ADMIN_PIN = "travelgo2017";
-
-export function verifyPin(pin: string): boolean {
-  return pin === ADMIN_PIN;
+export async function loginAdmin(email: string, password: string): Promise<boolean> {
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  return !error;
 }
 
-export function isAdminLoggedIn(): boolean {
-  return sessionStorage.getItem("travelgo_admin") === "true";
+export async function logoutAdmin() {
+  await supabase.auth.signOut();
 }
 
-export function setAdminLoggedIn(v: boolean) {
-  if (v) sessionStorage.setItem("travelgo_admin", "true");
-  else sessionStorage.removeItem("travelgo_admin");
+export async function checkSession(): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return !!session;
 }
